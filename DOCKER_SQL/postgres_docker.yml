@@ -1,0 +1,30 @@
+services:
+  pgdatabase:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=ny_taxi
+    volumes:
+      - "./ny_taxi_postgres_data:/var/lib/postgres/data"
+    ports:
+      - "5432:5432"
+
+  pgAdmin:
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@email.com
+      - PGADMIN_DEFAULT_PASSWORD=root
+    ports:
+      - "8081:80"
+
+  pgingest:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: sh -cx " 
+        python upload_data.py --user=root --password=root --host=pgdatabase --port=5432 --db=ny_taxi --table_name=yellow_taxi_trip --url='https://github.com/DataTalksClub/nyc-tlc-data/releases/download/yellow/yellow_tripdata_2021-01.csv.gz' &&
+        python upload_data.py --user=root --password=root --host=pgdatabase --port=5432 --db=ny_taxi --table_name=green_taxi_trip --url='https://github.com/DataTalksClub/nyc-tlc-data/releases/download/green/green_tripdata_2019-09.csv.gz' &&
+        python upload_data.py --user=root --password=root --host=pgdatabase --port=5432 --db=ny_taxi --table_name=taxi_zone_lookup --url='https://s3.amazonaws.com/nyc-tlc/misc/taxi+_zone_lookup.csv'
+      "
+    
